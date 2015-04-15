@@ -17,6 +17,7 @@ class Sprint(Base):
     finished = Column(DateTime)
     data = Column(postgresql.JSON)
     snapshots = relationship('Snapshot', backref='sprint')
+    commitments = relationship('SprintCommitment', backref='sprint')
     locked = Column(Boolean)
 
     def __init__(self, name, finished=None, data=None):
@@ -100,3 +101,15 @@ class IssueSnapshot(Base):
         self.snapshot = snapshot
         self.data = data
         self.state = state
+
+
+class SprintCommitment(Base):
+    __tablename__ = 'sprint_commitments'
+    id = Column(Integer, primary_key=True)
+    sprint_id = Column(Integer, ForeignKey('sprints.id'))
+    issue_id = Column(Integer)
+    created = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+    def __init__(self, sprint_id, issue_id):
+        self.sprint_id = sprint_id
+        self.issue_id = issue_id

@@ -10,6 +10,8 @@
 
 <script>
 $(function() {
+
+    // Draw graphs
     Chart.defaults.global.responsive = true;
 
     var burndownCtx = $("#burndown").get(0).getContext("2d");
@@ -66,6 +68,18 @@ $(function() {
         title: "Total Completion",
         levelColors: ["#ff0000", "#f9c802", "#a9d70b"]
     });
+
+    // Handle issue commitments
+    $('.js-committed').click(function(e) {
+        var issue_id = $(e.currentTarget).data('issue-id');
+        $.ajax({
+            type: 'POST',
+            url: '/sprints/{{sprint.id}}/commitments',
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify([{issue_id: issue_id, committed: e.currentTarget.checked}])
+        });
+    });
 });
 </script>
 {% endblock %}
@@ -100,6 +114,33 @@ $(function() {
 
 <div class="row">
     <div class="col-md-12">
+        <h4>Issues</h4>
+        <table class='table'>
+            <thead>
+                <tr>
+                    <th>Issue</th>
+                    <th>State</th>
+                    <th>Committed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue, state in issues %}
+                <tr>
+                    <td><a href="{{issue.html_url}}">#{{issue.number}} - {{issue.title}}</a></td>
+                    <td>{{states[state].label}}</td>
+                    <td><input class="js-committed" type="checkbox" data-issue-id="{{issue.number}}" {% if issue.number in committed_issues %}checked{% endif %}></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<hr>
+
+<div class="row">
+    <div class="col-md-12">
+        <h4>Snapshots</h4>
         <table class='table'>
             <thead>
                 <tr>
