@@ -1,0 +1,23 @@
+.title {
+    text-align: center;
+}
+
+.category-legend ul {
+    list-style: none;
+    padding: 10px;
+}
+
+.category-legend li {
+    display: inline-block;
+    padding-bottom: 5px;
+    margin-right: 4px;
+}
+
+.category-color {
+    border-radius: 5px;
+    width: 15px;
+    height: 15px;
+    margin-right: 3px;
+    margin-bottom: -2px;
+    display: inline-block;
+}

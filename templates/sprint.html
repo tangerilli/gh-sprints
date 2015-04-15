@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sprint.name }}{% endblock %}
+{% block header %}{{ sprint.name }}{% endblock %}
+
+{% block js %}
+<script src="/static/js/Chart.min.js"></script>
+<script src="/static/js/raphael.2.1.0.min.js"></script>
+<script src="/static/js/justgage.1.0.1.min.js"></script>
+
+<script>
+$(function() {
+    Chart.defaults.global.responsive = true;
+
+    var burndownCtx = $("#burndown").get(0).getContext("2d");
+    {% raw %}
+    options = {
+        datasetFill: false,
+        multiTooltipTemplate: "<%if (datasetLabel){%><%=datasetLabel%>: <%}%><%= value %>"    
+    };
+    {% endraw %}
+    var burndownData = {
+        labels: {{ dates|tojson|safe }},
+        datasets: [
+            {
+                label: 'Remaining',
+                data: {{ remaining|tojson|safe }},
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)"
+            },
+            {
+                label: 'Completed',
+                data: {{ completed|tojson|safe }},
+                strokeColor: "#BEEAAE",
+                pointColor: "#BEEAAE",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "#BEEAAE"
+            }
+        ]
+    };
+    var burndownChart = new Chart(burndownCtx).Line(burndownData, options);
+
+    var categoryCtx = $("#categories").get(0).getContext("2d");
+    var categoryData = [];
+    {% for state, state_data in states.items() %}
+    categoryData.push({
+        value: {{ snapshots[-1].get_points_for_states([state]) }},
+        color:"{{state_data.color}}",
+        label: "{{state_data.label}}"
+    });
+    {% endfor %}
+
+    var categoryChart = new Chart(categoryCtx).Doughnut(categoryData, options);
+
+    // Setup the completion gauges
+    new JustGage({
+        id: 'completion-percentage',
+        value: {{ completion }},
+        label: "%",
+        min: 0,
+        max: 100,
+        title: "Total Completion",
+        levelColors: ["#ff0000", "#f9c802", "#a9d70b"]
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <canvas id="burndown" style="width: 100%; height: 400px;"></canvas>
+    </div>    
+    <div class="col-md-4">
+        <canvas id="categories" style="width: 100%; height: 300px;"></canvas>
+        <div class="category-legend">
+            <ul>
+                {% for state in states.values() %}
+                <li>
+                <div class="category-color" style="background-color: {{state.color}};"></div>
+                {{state.label}}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 col-md-offset-4">
+        <div id="completion-percentage" class="200x160px"></div>
+    </div>
+</div>
+
+<hr>
+
+<div class="row">
+    <div class="col-md-12">
+        <table class='table'>
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for snapshot in snapshots %}
+                    <th>{{ snapshot.local_timestamp.strftime('%b %d, %Y') }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for state, state_data in states.items() %}
+                <tr>
+                    <th>{{ state_data.label }}</th>
+                    {% for snapshot in snapshots %}
+                    <td>{{ snapshot.get_points_for_states([state]) }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>Total</th>
+                    {% for snapshot in snapshots %}
+                    <td><strong>{{ snapshot.total_points }}</strong></td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

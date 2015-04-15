@@ -1,8 +1,13 @@
+from datetime import datetime
+
+import pytz
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
+from sqlalchemy import func
+
 from database import Base
-from datetime import datetime
+import settings
 
 
 class Sprint(Base):
@@ -18,6 +23,25 @@ class Sprint(Base):
         self.name = name
         self.finished = finished
         self.data = data
+
+    @property
+    def end_date(self):
+        return self.finished.date()
+
+    @property
+    def last_snapshot(self):
+        return Snapshot.query.filter(Snapshot.sprint_id == self.id).order_by(
+            Snapshot.timestamp.desc()).first()
+
+    def get_snapshots(self):
+        all_snapshots = Snapshot.query.filter(Snapshot.sprint_id == self.id).order_by(
+            Snapshot.timestamp).all()
+        filtered_snapshots = []
+        for i, snapshot in enumerate(all_snapshots):
+            if (i+1) < len(all_snapshots) and all_snapshots[i+1].local_timestamp.date() == snapshot.local_timestamp.date():
+                continue
+            filtered_snapshots.append(snapshot)
+        return filtered_snapshots
 
 
 class Snapshot(Base):
@@ -35,14 +59,32 @@ class Snapshot(Base):
         return Snapshot.query.filter(Snapshot.sprint_id == sprint.id).order_by(
             Snapshot.timestamp.desc()).first()
 
+    def get_points_for_states(self, states=[]):
+        cursor = IssueSnapshot.query.with_entities(func.sum(IssueSnapshot.points)).filter(IssueSnapshot.snapshot_id == self.id)
+        if states:
+            cursor = cursor.filter(IssueSnapshot.state.in_(states))
+        return cursor.scalar() or 0
+
+    @property
+    def total_points(self):
+        return self.get_points_for_states()
+
+    @property
+    def completed_points(self):
+        return self.get_points_for_states(settings.COMPLETE_STATES)
+
+    @property
+    def remaining_points(self):
+        incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
+        return self.get_points_for_states(incomplete_states)
+
+    @property
+    def local_timestamp(self):
+        timezone = pytz.timezone(settings.TIMEZONE)
+        return self.timestamp.astimezone(timezone)
+
 
 class IssueSnapshot(Base):
-    ISSUE_STATE_PICKUP = 0
-    ISSUE_STATE_BUILDING = 1
-    ISSUE_STATE_CR = 2
-    ISSUE_STATE_DEPLOY = 3
-    ISSUE_STATE_CLOSED = 4
-
     __tablename__ = 'issue_snapshots'
     id = Column(Integer, primary_key=True)
     issue_id = Column(Integer)

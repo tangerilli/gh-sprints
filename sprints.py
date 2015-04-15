@@ -46,17 +46,19 @@ def save_issue_snapshot(issue, snapshot):
     else:
         points = 0
 
-    state = IssueSnapshot.ISSUE_STATE_CLOSED
     if issue['state'] == 'open':
         for label in issue['labels']:
-            if label['name'][0] in ['1', '2']:
-                state = IssueSnapshot.ISSUE_STATE_PICKUP
-            if label['name'][0] in ['3']:
-                state = IssueSnapshot.ISSUE_STATE_BUILDING
-            if label['name'][0] in ['4']:
-                state = IssueSnapshot.ISSUE_STATE_CR
-            if label['name'][0] in ['']:
-                state = IssueSnapshot.ISSUE_STATE_DEPLOY
+            name = label['name']
+            for possible_state in settings.ISSUE_STATES:
+                if not possible_state['open']:
+                    continue
+                for possible_label in possible_state['github_label']:
+                    if name.startswith(possible_label):
+                        state = possible_state
+                        break
+    else:
+        closed_states = [state for state in settings.ISSUE_STATES if state['open'] is False]
+        state = closed_states[0]
 
     # TODO: Only snapshot if something has changed (maybe there's an updated_on field)
     updated_at = datetime.datetime.strptime(issue['updated_at'], settings.JSON_DATETIME_FORMAT)
@@ -69,7 +71,7 @@ def save_issue_snapshot(issue, snapshot):
         if previously_updated == updated_at:
             is_updated = False
 
-    issue_snapshot = IssueSnapshot(issue['number'], points, state, snapshot, issue)
+    issue_snapshot = IssueSnapshot(issue['number'], points, state['id'], snapshot, issue)
     db_session.add(issue_snapshot)
     return is_updated
 
@@ -150,16 +152,8 @@ def print_stats(sprint_name=None):
             print "  No stats exist"
         else:
             issues = snapshot.issues
-            pickup = _sum_points(issues, IssueSnapshot.ISSUE_STATE_PICKUP)
-            building = _sum_points(issues, IssueSnapshot.ISSUE_STATE_BUILDING)
-            cr = _sum_points(issues, IssueSnapshot.ISSUE_STATE_CR)
-            deploy = _sum_points(issues, IssueSnapshot.ISSUE_STATE_DEPLOY)
-            closed = _sum_points(issues, IssueSnapshot.ISSUE_STATE_CLOSED)
-            print "  Pickup: {}".format(pickup)
-            print "  Building: {}".format(building)
-            print "  CR: {}".format(cr)
-            print "  Deploy: {}".format(deploy)
-            print "  Completed: {}".format(closed)
+            for state in settings.ISSUE_STATES:
+                print "  {}: {}".format(state['label'], _sum_points(issues, state['id']))
 
 
 def lock_sprint(sprint_name, lock):

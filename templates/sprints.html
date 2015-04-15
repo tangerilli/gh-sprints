@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Sprints{% endblock %}
+{% block header %}Sprints{% endblock %}
+
+{% block content %}
+<table class='table'>
+    <thead>
+        <tr>
+            <th>Sprint</th>
+            <th>End Date</th>
+            <th>Total Points</th>
+            <th>Completed Points</th>
+            <th>Completion Percentage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sprint in sprints %}
+        <tr>
+            <td><a href="/sprints/{{sprint.model.id}}">{{ sprint.model.name }}</a></td>
+            <td>{{ sprint.model.end_date }}</td>
+            <td>{{ sprint.total }}</td>
+            <td>{{ sprint.completed }}</td>
+            <td>{{ sprint.completion }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
