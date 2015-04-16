@@ -17,7 +17,12 @@
     <tbody>
         {% for sprint in sprints %}
         <tr>
-            <td><a href="/sprints/{{sprint.model.id}}">{{ sprint.model.name }}</a></td>
+            <td>
+                <a href="/sprints/{{sprint.model.id}}">{{ sprint.model.name }}</a>
+                {% if sprint.model.locked %}
+                <img src='/static/img/lock-16.png'>
+                {% endif %}
+            </td>
             <td>{{ sprint.model.end_date }}</td>
             <td>{{ sprint.total }}</td>
             <td>{{ sprint.completed }}</td>

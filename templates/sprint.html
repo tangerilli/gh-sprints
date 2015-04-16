@@ -65,7 +65,7 @@ $(function() {
         label: "%",
         min: 0,
         max: 100,
-        title: "Total Completion",
+        title: "Completion Percentage",
         levelColors: ["#ff0000", "#f9c802", "#a9d70b"]
     });
 
@@ -75,9 +75,20 @@ $(function() {
         $.ajax({
             type: 'POST',
             url: '/sprints/{{sprint.id}}/commitments',
-            dataType: "json",
-            contentType: "application/json",
+            dataType: 'json',
+            contentType: 'application/json',
             data: JSON.stringify([{issue_id: issue_id, committed: e.currentTarget.checked}])
+        });
+    });
+
+    // Handle locking the sprint
+    $('.js-locked').click(function(e) {
+        $.ajax({
+            type: 'PATCH',
+            url: '/sprints/{{sprint.id}}',
+            dataType: 'JSON',
+            contentType: 'application/json',
+            data: JSON.stringify({locked: e.currentTarget.checked})
         });
     });
 });
@@ -85,6 +96,7 @@ $(function() {
 {% endblock %}
 
 {% block content %}
+<h4>Stats</h4>
 <div class="row">
     <div class="col-md-8">
         <canvas id="burndown" style="width: 100%; height: 400px;"></canvas>
@@ -104,7 +116,17 @@ $(function() {
     </div>
 </div>
 
-<div class="row">
+<div class="row details">
+    <div class="col-md-4">
+        <ul class="sprint-details">
+            <li><strong>End date:</strong> {{sprint.end_date}}</li>
+            <li><strong>Total points:</strong> {{snapshots[-1].total_points}}</li>
+            <li>
+                <input type="checkbox" class="js-locked locked" {% if sprint.locked %}checked{% endif %}>
+                <strong>Locked</strong>
+            </li>
+        </ul>
+    </div>
     <div class="col-md-4 col-md-offset-4">
         <div id="completion-percentage" class="200x160px"></div>
     </div>

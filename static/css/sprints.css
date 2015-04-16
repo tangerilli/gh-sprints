@@ -1,5 +1,11 @@
 .title {
     text-align: center;
+    margin-bottom: 15px;
+}
+
+.sprint-details {
+    list-style: none;
+    padding-top: 55px;
 }
 
 .category-legend ul {
@@ -20,4 +26,12 @@
     margin-right: 3px;
     margin-bottom: -2px;
     display: inline-block;
+}
+
+input.locked {
+    margin-right: 5px;
+}
+
+.details {
+    margin-top: 15px;
 }

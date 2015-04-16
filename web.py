@@ -29,34 +29,42 @@ def sprints():
     return render_template('sprints.html', sprints=sprints)
 
 
-@app.route('/sprints/<sprint_id>', methods=['GET'])
+@app.route('/sprints/<sprint_id>', methods=['GET', 'PATCH'])
 def sprint(sprint_id):
     sprint = Sprint.query.filter(Sprint.id == sprint_id).first()
-    snapshots = sprint.get_snapshots()
-    states = {state['id']: state for state in settings.ISSUE_STATES}
-    completed = [snapshot.completed_points for snapshot in snapshots]
-    remaining = [snapshot.remaining_points for snapshot in snapshots]
-    dates = [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots]
+    if request.method == 'GET':
+        snapshots = sprint.get_snapshots()
+        states = {state['id']: state for state in settings.ISSUE_STATES}
+        completed = [snapshot.completed_points for snapshot in snapshots]
+        remaining = [snapshot.remaining_points for snapshot in snapshots]
+        dates = [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots]
 
-    # Get all of the issues captured in the latest snapshot
-    current_snapshot = snapshots[-1]
-    issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == current_snapshot.id)
-    issues = sorted([(issue.data, issue.state) for issue in issue_snapshots], key=lambda x: x[1])
+        # Get all of the issues captured in the latest snapshot
+        current_snapshot = snapshots[-1]
+        issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == current_snapshot.id)
+        issues = sorted([(issue.data, issue.state) for issue in issue_snapshots], key=lambda x: x[1])
 
-    committed_issues = [commitment.issue_id for commitment in sprint.commitments]
+        committed_issues = [commitment.issue_id for commitment in sprint.commitments]
 
-    context = {
-        'sprint': sprint,
-        'snapshots': snapshots,
-        'states': states,
-        'dates': dates,
-        'completed': completed,
-        'remaining': remaining,
-        'completion': int((float(completed[-1]) / (completed[-1]+remaining[-1])) * 100),
-        'issues': issues,
-        'committed_issues': committed_issues
-    }
-    return render_template('sprint.html', **context)
+        context = {
+            'sprint': sprint,
+            'snapshots': snapshots,
+            'states': states,
+            'dates': dates,
+            'completed': completed,
+            'remaining': remaining,
+            'completion': int((float(completed[-1]) / (completed[-1]+remaining[-1])) * 100),
+            'issues': issues,
+            'committed_issues': committed_issues
+        }
+        return render_template('sprint.html', **context)
+    elif request.method == 'PATCH':
+        for name, value in request.json.items():
+            setattr(sprint, name, value)
+            db_session.commit()
+        r = Response('')
+        r.status_code = 204
+        return r
 
 
 @app.route('/sprints/<sprint_id>/commitments', methods=['POST'])
