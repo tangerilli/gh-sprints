@@ -35,3 +35,12 @@ input.locked {
 .details {
     margin-top: 15px;
 }
+
+.committed-label {
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+.committed-only {
+    margin-left: 15px !important;
+}

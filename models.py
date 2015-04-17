@@ -60,15 +60,23 @@ class Snapshot(Base):
         return Snapshot.query.filter(Snapshot.sprint_id == sprint.id).order_by(
             Snapshot.timestamp.desc()).first()
 
-    def get_points_for_states(self, states=[]):
-        cursor = IssueSnapshot.query.with_entities(func.sum(IssueSnapshot.points)).filter(IssueSnapshot.snapshot_id == self.id)
+    def get_points_for_states(self, states=[], committed_only=False):
+        cursor = IssueSnapshot.query.with_entities(func.sum(IssueSnapshot.points)).filter(
+            IssueSnapshot.snapshot_id == self.id)
         if states:
             cursor = cursor.filter(IssueSnapshot.state.in_(states))
+        if committed_only:
+            commitments = [c.issue_id for c in SprintCommitment.query.filter(SprintCommitment.sprint_id == self.sprint_id)]
+            cursor = cursor.filter(IssueSnapshot.issue_id.in_(commitments))
         return cursor.scalar() or 0
 
     @property
     def total_points(self):
         return self.get_points_for_states()
+
+    @property
+    def total_points_committed(self):
+        return self.get_points_for_states(committed_only=True)
 
     @property
     def completed_points(self):
@@ -78,6 +86,15 @@ class Snapshot(Base):
     def remaining_points(self):
         incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
         return self.get_points_for_states(incomplete_states)
+
+    @property
+    def completed_points_committed(self):
+        return self.get_points_for_states(settings.COMPLETE_STATES, committed_only=True)
+
+    @property
+    def remaining_points_committed(self):
+        incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
+        return self.get_points_for_states(incomplete_states, committed_only=True)
 
     @property
     def local_timestamp(self):

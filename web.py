@@ -3,12 +3,19 @@ from flask import render_template
 
 from database import db_session
 from models import Sprint, IssueSnapshot, SprintCommitment
+from sprints import monitor_sprints
 import settings
 
 
 app = Flask(__name__)
 app.debug = settings.APP_DEBUG
 app.secret_key = settings.APP_SECRET_KEY
+
+
+def _empty_response():
+    r = Response('')
+    r.status_code = 204
+    return r
 
 
 @app.route('/', methods=['GET'])
@@ -35,25 +42,42 @@ def sprint(sprint_id):
     if request.method == 'GET':
         snapshots = sprint.get_snapshots()
         states = {state['id']: state for state in settings.ISSUE_STATES}
-        completed = [snapshot.completed_points for snapshot in snapshots]
-        remaining = [snapshot.remaining_points for snapshot in snapshots]
-        dates = [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots]
+
+        all_completed = [snapshot.completed_points for snapshot in snapshots]
+        all_remaining = [snapshot.remaining_points for snapshot in snapshots]
+        all_stats = {
+            'completed': all_completed,
+            'remaining': all_remaining,
+            'dates': [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots],
+            'completion': int((float(all_completed[-1]) / (all_completed[-1]+all_remaining[-1])) * 100)
+        }
+
+        committed_completed = [snapshot.completed_points_committed for snapshot in snapshots]
+        committed_remaining = [snapshot.remaining_points_committed for snapshot in snapshots]
+        committed_stats = {
+            'completed': committed_completed,
+            'remaining': committed_remaining,
+            'dates': [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots],
+            'completion': int((float(committed_completed[-1]) / (committed_completed[-1]+committed_remaining[-1])) * 100)
+
+        }
+
+        stats = {
+            'all': all_stats,
+            'committed': committed_stats
+        }
 
         # Get all of the issues captured in the latest snapshot
         current_snapshot = snapshots[-1]
         issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == current_snapshot.id)
         issues = sorted([(issue.data, issue.state) for issue in issue_snapshots], key=lambda x: x[1])
-
         committed_issues = [commitment.issue_id for commitment in sprint.commitments]
 
         context = {
             'sprint': sprint,
             'snapshots': snapshots,
             'states': states,
-            'dates': dates,
-            'completed': completed,
-            'remaining': remaining,
-            'completion': int((float(completed[-1]) / (completed[-1]+remaining[-1])) * 100),
+            'stats': stats,
             'issues': issues,
             'committed_issues': committed_issues
         }
@@ -62,9 +86,7 @@ def sprint(sprint_id):
         for name, value in request.json.items():
             setattr(sprint, name, value)
             db_session.commit()
-        r = Response('')
-        r.status_code = 204
-        return r
+        return _empty_response()
 
 
 @app.route('/sprints/<sprint_id>/commitments', methods=['POST'])
@@ -79,9 +101,13 @@ def edit_committments(sprint_id):
                 SprintCommitment.sprint_id == sprint_id, SprintCommitment.issue_id == issue_id).delete()
     db_session.commit()
 
-    r = Response('')
-    r.status_code = 204
-    return r
+    return _empty_response()
+
+
+@app.route('/snapshot', methods=['POST'])
+def do_snapshot():
+    monitor_sprints()
+    return _empty_response()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
