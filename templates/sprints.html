@@ -3,6 +3,28 @@
 {% block title %}Sprints{% endblock %}
 {% block header %}Sprints{% endblock %}
 
+{% block js %}
+<script>
+$(function() {
+    $('.js-do-snapshot').click(function() {
+        $('.js-do-snapshot').prop('disabled', true);
+        $('.js-do-snapshot').text('Updating...');
+        $('.js-do-snapshot').removeClass('btn-primary');
+        $.ajax({
+            type: 'POST',
+            url: '/snapshot',
+        }).done(function() {
+            document.location.reload(true);
+        }).always(function() {
+            $('.js-do-snapshot').prop('disabled', false);
+            $('.js-do-snapshot').text('Update');
+            $('.js-do-snapshot').addClass('btn-primary');
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% block content %}
 <table class='table'>
     <thead>
@@ -31,4 +53,6 @@
         {% endfor %}
     </tbody>
 </table>
+
+<button class="btn btn-primary js-do-snapshot">Update</button>
 {% endblock %}
