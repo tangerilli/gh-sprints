@@ -1,3 +1,5 @@
+import re
+
 # Your github API token
 TOKEN = ''
 # Your github organization name
@@ -64,6 +66,10 @@ ISSUE_STATES = [
 
 # The id's of states that are considered "done"
 COMPLETE_STATES = [3, 4]
+
+# A regular expression to use for calculating the point count for an issue from its title
+# In the example below, issue titles should look like "(SP3) Some issue" for a 3 point issue
+POINT_PATTERN = re.compile("\(SP(\d+)\)")
 
 try:
     from local_settings import *

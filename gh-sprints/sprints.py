@@ -13,8 +13,6 @@ import settings
 from database import init_db, db_session
 from models import Sprint, Snapshot, IssueSnapshot
 
-POINT_PATTERN = re.compile("\(SP(\d+)\)")
-
 
 def _auth_get_request(url):
     return requests.get(url, auth=HTTPBasicAuth(settings.TOKEN, 'x-oauth-basic'))
@@ -40,7 +38,7 @@ def get_or_create_sprint(milestone):
 
 def save_issue_snapshot(issue, snapshot):
     print "Snapshotting %s" % issue['number']
-    match = POINT_PATTERN.search(issue['title'])
+    match = settings.POINT_PATTERN.search(issue['title'])
     if match:
         points = int(match.groups(0)[0])
     else:
