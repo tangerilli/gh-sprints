@@ -10,18 +10,18 @@
 
 <script>
 
-function generateBurndownDatasets(remaining, completed) {
+function generateBurndownDatasets(remaining, completed, total) {
     var burndownData = {
         labels: {{ stats.all.dates|tojson|safe }},
         datasets: [
             {
                 label: 'Remaining',
                 data: remaining,
-                strokeColor: "rgba(151,187,205,1)",
-                pointColor: "rgba(151,187,205,1)",
+                strokeColor: "#EA7B7F",
+                pointColor: "#EA7B7F",
                 pointStrokeColor: "#fff",
                 pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(151,187,205,1)"
+                pointHighlightStroke: "#EA7B7F"
             },
             {
                 label: 'Completed',
@@ -31,6 +31,15 @@ function generateBurndownDatasets(remaining, completed) {
                 pointStrokeColor: "#fff",
                 pointHighlightFill: "#fff",
                 pointHighlightStroke: "#BEEAAE"
+            },
+            {
+                label: 'Total',
+                data: total,
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)"
             }
         ]
     };
@@ -49,7 +58,8 @@ $(function() {
         multiTooltipTemplate: "<%if (datasetLabel){%><%=datasetLabel%>: <%}%><%= value %>"    
     };
     {% endraw %}
-    var burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, {{ stats.all.completed|tojson|safe }});
+    var burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, 
+        {{ stats.all.completed|tojson|safe }}, {{ stats.all.total|tojson|safe }});
     var burndownChart = new Chart(burndownCtx).Line(burndownData, options);
 
     var categoryCtx = $("#categories").get(0).getContext("2d");
@@ -109,17 +119,19 @@ $(function() {
         burndownChart.destroy();
         categoryChart.destroy();
         if (e.currentTarget.checked) {
-            burndownData = generateBurndownDatasets({{ stats.committed.remaining|tojson|safe }}, {{ stats.committed.completed|tojson|safe }});
+            burndownData = generateBurndownDatasets({{ stats.committed.remaining|tojson|safe }}, 
+                {{ stats.committed.completed|tojson|safe }}, {{ stats.committed.total|tojson|safe }});
             burndownChart = new Chart(burndownCtx).Line(burndownData, options);
             categoryChart = new Chart(categoryCtx).Doughnut(committedCategoryData, options);
             completionGauge.refresh({{ stats.committed.completion }});
-            $('.js-total-points').text({{snapshots[-1].total_points_committed}});
+            $('.js-total-points').text({{stats.committed.total[-1]}});
         } else {
-            burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, {{ stats.all.completed|tojson|safe }});
+            burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, 
+                {{ stats.all.completed|tojson|safe }}, {{ stats.all.total|tojson|safe }});
             burndownChart = new Chart(burndownCtx).Line(burndownData, options);
             categoryChart = new Chart(categoryCtx).Doughnut(allCategoryData, options);
             completionGauge.refresh({{ stats.all.completion }});
-            $('.js-total-points').text({{snapshots[-1].total_points}});
+            $('.js-total-points').text({{stats.all.total[-1]}});
         }
         burndownChart.update();
     });
@@ -155,7 +167,7 @@ $(function() {
     <div class="col-md-4">
         <ul class="sprint-details">
             <li><strong>End date:</strong> {{sprint.end_date}}</li>
-            <li><strong>Total points:</strong> <span class="js-total-points">{{snapshots[-1].total_points}}</span></li>
+            <li><strong>Total points:</strong> <span class="js-total-points">{{stats.all.total[-1]}}</span></li>
             <li>
                 <input type="checkbox" class="js-locked locked" {% if sprint.locked %}checked{% endif %}>
                 <strong>Locked</strong>

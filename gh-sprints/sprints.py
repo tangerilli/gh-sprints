@@ -81,8 +81,10 @@ def snapshot_issues(repo, milestone):
     Fetches all of the issues for the given sprint and stores them in a database
     """
     sprint = get_or_create_sprint(milestone)
+    print "Processing {} ({})".format(sprint.name, milestone['number'])
     if sprint.locked is True:
         print "Skipping '{}', it's locked".format(sprint.name)
+        return
     snapshot = Snapshot(sprint)
     db_session.add(snapshot)
 

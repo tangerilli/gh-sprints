@@ -18,6 +18,12 @@ def _empty_response():
     return r
 
 
+# Clean up the database sessions after a request
+@app.teardown_request
+def shutdown_session(exception=None):
+    db_session.remove()
+
+
 @app.route('/', methods=['GET'])
 def sprints():
     sprints = []
@@ -45,22 +51,27 @@ def sprint(sprint_id):
 
         all_completed = [snapshot.completed_points for snapshot in snapshots]
         all_remaining = [snapshot.remaining_points for snapshot in snapshots]
+        all_totals = [snapshot.total_points for snapshot in snapshots]
         all_stats = {
             'completed': all_completed,
             'remaining': all_remaining,
+            'total': all_totals,
             'dates': [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots],
-            'completion': int((float(all_completed[-1]) / (all_completed[-1]+all_remaining[-1])) * 100)
         }
+        if all_totals[-1]:
+            all_stats['completion'] = int((float(all_completed[-1]) / (all_totals[-1])) * 100)
 
         committed_completed = [snapshot.completed_points_committed for snapshot in snapshots]
         committed_remaining = [snapshot.remaining_points_committed for snapshot in snapshots]
+        committed_totals = [snapshot.total_points_committed for snapshot in snapshots]
         committed_stats = {
             'completed': committed_completed,
             'remaining': committed_remaining,
+            'total': committed_totals,
             'dates': [snapshot.timestamp.strftime('%d/%m') for snapshot in snapshots],
-            'completion': int((float(committed_completed[-1]) / (committed_completed[-1]+committed_remaining[-1])) * 100)
-
         }
+        if committed_totals[-1]:
+            committed_stats['completion'] = int((float(committed_completed[-1]) / (committed_totals[-1])) * 100)
 
         stats = {
             'all': all_stats,
