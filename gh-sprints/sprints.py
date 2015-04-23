@@ -157,11 +157,18 @@ def print_stats(sprint_name=None):
 
 
 def lock_sprint(sprint_name, lock):
-    sprint = Sprint.query.filter(Sprint.name == sprint_name).first()
-    if not sprint:
+    if sprint_name == 'current':
+        yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        six_days_from_now = yesterday + datetime.timedelta(days=7)
+        sprints = Sprint.query.filter(Sprint.finished > yesterday).filter(
+            Sprint.finished < six_days_from_now).all()
+    else:
+        sprints = Sprint.query.filter(Sprint.name == sprint_name).all()
+    if not len(sprints):
         print "Could not find sprint '{}'".format(sprint_name)
         return 1
-    sprint.locked = lock
+    for sprint in sprints:
+        sprint.locked = lock
     db_session.commit()
     return 0
 
