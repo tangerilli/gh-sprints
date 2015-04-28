@@ -37,13 +37,14 @@ def get_or_create_sprint(milestone):
 
 
 def save_issue_snapshot(issue, snapshot):
-    print "Snapshotting %s" % issue['number']
+    print "Snapshotting {}".format(issue['number'])
     match = settings.POINT_PATTERN.search(issue['title'])
     if match:
         points = int(match.groups(0)[0])
     else:
         points = 0
 
+    state = None
     if issue['state'] == 'open':
         for label in issue['labels']:
             name = label['name']
@@ -57,6 +58,10 @@ def save_issue_snapshot(issue, snapshot):
     else:
         closed_states = [state for state in settings.ISSUE_STATES if state['open'] is False]
         state = closed_states[0]
+
+    if state is None:
+        print "Skipping {}, could not determine state".format(issue['number'])
+        return False
 
     # TODO: Only snapshot if something has changed (maybe there's an updated_on field)
     updated_at = datetime.datetime.strptime(issue['updated_at'], settings.JSON_DATETIME_FORMAT)
