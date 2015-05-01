@@ -38,3 +38,15 @@
 6. initialize the DB by running `python gh-sprints/sprints.py init`
 7. populate the DB by running `python gh-sprints/sprints.py snapshot` or click the "Update" button in the UI
 8. main it rain PRs :shipit:
+
+#### Deployment
+
+The web app uses Flask, so see their [documentation](http://flask.pocoo.org/docs/0.10/deploying/) for deployment options.
+
+Once the web app is deployed, you probably want to have snapshots happen automatically. The following cron line will do a snapshot once an hour (at the 30 minute mark):
+
+`30 * * * * <path to python> <path to the repo>/sprints.py snapshot 2>&1 | /usr/bin/logger`
+
+You may also want to automatically lock a sprint. The following cron line will lock the current sprint on Friday afternoons:
+
+`0 19 * * 5 <path to python> <path to the repo>/sprints.py lock -s current 2>&1 | /usr/bin/logger`
