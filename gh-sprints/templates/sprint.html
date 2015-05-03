@@ -196,7 +196,7 @@ $(function() {
                 {% for issue, state in issues %}
                 <tr>
                     <td>
-                        <a href="{{issue.html_url}}">#{{issue.number}} - {{issue.title}}</a>
+                        <a href="{{issue.html_url}}" target="_blank">#{{issue.number}} - {{issue.title}}</a>
                         {% if issue.labels %}
                             <ul class="list-unstyled list-inline issue-tag-list">
                                 {% for label in issue.labels %}
