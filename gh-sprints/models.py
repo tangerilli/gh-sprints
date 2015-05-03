@@ -130,16 +130,3 @@ class SprintCommitment(Base):
     def __init__(self, sprint_id, issue_id):
         self.sprint_id = sprint_id
         self.issue_id = issue_id
-
-
-class IssueLabel(Base):
-    __tablename__ = 'issue_labels'
-    id = Column(Integer, primary_key=True)
-    color = Column(String(256))
-    name = Column(String(256))
-    url = Column(String(256))
-
-    def __init__(self, color, name, url):
-        self.color = color
-        self.name = name
-        self.url = url
