@@ -1,12 +1,11 @@
-- [ ] have a button to commit all of the current issues in the list for a sprint
-- [ ] have a "check all" button for checkboxes in Committed column
+- [x] add a readme
+- [x] show tags beside issue titles
+- [ ] have a button to commit all of the current issues in the list for a sprint ("check all" button?)
 - [ ] somehow display when an issue was previously part of another sprint
 - [ ] on homepage, display both committed completion and total completion
  - maybe with little bar graphs?
 - [ ] start date for a sprint (maybe derive by default, but allow it to be editable)
 - [ ] spark line in homepage list
 - [ ] configurable granularity on sprint page (i.e. only one snapshot per day or per hour or whatever)
-- [x] add a readme
-- [x] show tags beside issue titles
 - [ ] auto-move issues into the next sprint on Friday afternoons
 - [ ] have somewhere to enter how long the meetings are, and show that in a graph
