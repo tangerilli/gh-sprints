@@ -11,6 +11,9 @@ app = Flask(__name__)
 app.debug = settings.APP_DEBUG
 app.secret_key = settings.APP_SECRET_KEY
 
+@app.template_filter('base16')
+def base16(color_element):
+    return int(color_element,16)
 
 def _empty_response():
     r = Response('')
