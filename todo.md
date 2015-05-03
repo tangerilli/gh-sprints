@@ -2,10 +2,29 @@
 - [x] show tags beside issue titles
 - [ ] have a button to commit all of the current issues in the list for a sprint ("check all" button?)
 - [ ] somehow display when an issue was previously part of another sprint
+  - should have a page for each issue. It can have:
+    - a graph of the points for the issue over time
+    - a link to each sprint that the issue appeared in, with the number of points it had during that sprint (which could be a range), and the  state(s) it was in during that sprint
+  - display the number of sprints each issue was a part of
+- [ ] ability to view a consolidation of sprints (i.e. just take all the data for two or more sprints, and present it as if it were one)
+- [ ] a project view. Allow selection of a label, and display all of the issues associated with that label, with stats
+ - user has to choose the labels they want to monitor. issues don't get included in the snapshot until they're monitored
+ - separate snapshots are created for these projects (but the snapshot can (potentially) reference the same issue snapshots (??))
+ - page displays:
+   - completion percentage (progress) over time (same as for sprint)
+     - On same graph, display total points
+   - The current counts of completed points, remaining points and total points
+- [ ] try to figure out who worked on issues and provide counts
+ - could look at comments to figure out who gave +1, and at commit history to just include anyone who committed
+
 - [ ] on homepage, display both committed completion and total completion
  - maybe with little bar graphs?
 - [ ] start date for a sprint (maybe derive by default, but allow it to be editable)
 - [ ] spark line in homepage list
 - [ ] configurable granularity on sprint page (i.e. only one snapshot per day or per hour or whatever)
 - [ ] auto-move issues into the next sprint on Friday afternoons
-- [ ] have somewhere to enter how long the meetings are, and show that in a graph
+- [ ] have somewhere to enter how long the meetings are, and show that in a graph (TOP PRIORITY)
+- [ ] make it look pretty
+- [ ] consider turning the whole thing into the usual frontend app/backend api thing, with an actual frontend framework, blah blah blah
+- [ ] Use LESS/Coffeescript/etc..
+- [ ] once project stuff is implemented, have super awesome calendar view that just figures out when everything will be done based on velocity, position of issues in queue, etc..
