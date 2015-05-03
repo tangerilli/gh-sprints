@@ -105,6 +105,7 @@ class Snapshot(Base):
 class IssueSnapshot(Base):
     __tablename__ = 'issue_snapshots'
     id = Column(Integer, primary_key=True)
+    repo = Column(String(1024), nullable=True)
     issue_id = Column(Integer)
     points = Column(Integer)
     data = Column(postgresql.JSON)
@@ -112,8 +113,9 @@ class IssueSnapshot(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     state = Column(Integer)
 
-    def __init__(self, issue_id, points, state, snapshot, data):
+    def __init__(self, issue_id, repo, points, state, snapshot, data):
         self.issue_id = issue_id
+        self.repo = repo
         self.points = points
         self.snapshot = snapshot
         self.data = data

@@ -36,7 +36,7 @@ def get_or_create_sprint(milestone):
     return sprint
 
 
-def save_issue_snapshot(issue, snapshot):
+def save_issue_snapshot(repo, issue, snapshot):
     print "Snapshotting {}".format(issue['number'])
     match = settings.POINT_PATTERN.search(issue['title'])
     if match:
@@ -74,7 +74,7 @@ def save_issue_snapshot(issue, snapshot):
         if previously_updated == updated_at:
             is_updated = False
 
-    issue_snapshot = IssueSnapshot(issue['number'], points, state['id'], snapshot, issue)
+    issue_snapshot = IssueSnapshot(issue['number'], repo, points, state['id'], snapshot, issue)
     db_session.add(issue_snapshot)
     return is_updated
 
@@ -96,7 +96,7 @@ def snapshot_issues(repo, milestone):
     while True:
         issues = _auth_get_request(url)
         for issue in issues.json():
-            is_updated = save_issue_snapshot(issue, snapshot)
+            is_updated = save_issue_snapshot(repo, issue, snapshot)
             have_updates = have_updates or is_updated
 
         next_page = _get_next_page(issues)
