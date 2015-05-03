@@ -55,10 +55,10 @@ $(function() {
     {% raw %}
     options = {
         datasetFill: false,
-        multiTooltipTemplate: "<%if (datasetLabel){%><%=datasetLabel%>: <%}%><%= value %>"    
+        multiTooltipTemplate: "<%if (datasetLabel){%><%=datasetLabel%>: <%}%><%= value %>"
     };
     {% endraw %}
-    var burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, 
+    var burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }},
         {{ stats.all.completed|tojson|safe }}, {{ stats.all.total|tojson|safe }});
     var burndownChart = new Chart(burndownCtx).Line(burndownData, options);
 
@@ -119,14 +119,14 @@ $(function() {
         burndownChart.destroy();
         categoryChart.destroy();
         if (e.currentTarget.checked) {
-            burndownData = generateBurndownDatasets({{ stats.committed.remaining|tojson|safe }}, 
+            burndownData = generateBurndownDatasets({{ stats.committed.remaining|tojson|safe }},
                 {{ stats.committed.completed|tojson|safe }}, {{ stats.committed.total|tojson|safe }});
             burndownChart = new Chart(burndownCtx).Line(burndownData, options);
             categoryChart = new Chart(categoryCtx).Doughnut(committedCategoryData, options);
             completionGauge.refresh({{ stats.committed.completion }});
             $('.js-total-points').text({{stats.committed.total[-1]}});
         } else {
-            burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }}, 
+            burndownData = generateBurndownDatasets({{ stats.all.remaining|tojson|safe }},
                 {{ stats.all.completed|tojson|safe }}, {{ stats.all.total|tojson|safe }});
             burndownChart = new Chart(burndownCtx).Line(burndownData, options);
             categoryChart = new Chart(categoryCtx).Doughnut(allCategoryData, options);
@@ -147,7 +147,7 @@ $(function() {
 <div class="row">
     <div class="col-md-8">
         <canvas id="burndown" style="width: 100%; height: 400px;"></canvas>
-    </div>    
+    </div>
     <div class="col-md-4">
         <canvas id="categories" style="width: 100%; height: 300px;"></canvas>
         <div class="category-legend">
@@ -195,7 +195,18 @@ $(function() {
             <tbody>
                 {% for issue, state in issues %}
                 <tr>
-                    <td><a href="{{issue.html_url}}">#{{issue.number}} - {{issue.title}}</a></td>
+                    <td>
+                        <a href="{{issue.html_url}}" target="_blank">#{{issue.number}} - {{issue.title}}</a>
+                        {% if issue.labels %}
+                            <ul class="list-unstyled list-inline issue-tag-list">
+                                {% for label in issue.labels %}
+                                    <li style="background:#{{label.color}};color:{{label.color|foreground_color}};" class="issue-tag">
+                                        {{label.name}}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </td>
                     <td>{{states[state].label}}</td>
                     <td><input class="js-committed" type="checkbox" data-issue-id="{{issue.number}}" {% if issue.number in committed_issues %}checked{% endif %}></td>
                 </tr>

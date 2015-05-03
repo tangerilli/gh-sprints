@@ -44,3 +44,15 @@ input.locked {
 .committed-only {
     margin-left: 15px !important;
 }
+
+.issue-tag-list {
+    display: inline-block;
+    margin-left: 2px;
+}
+
+.issue-tag {
+    border-radius: 2px;
+    padding: 3px 4px;
+    margin-left: 5px;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
+}
