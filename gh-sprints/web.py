@@ -11,9 +11,14 @@ app = Flask(__name__)
 app.debug = settings.APP_DEBUG
 app.secret_key = settings.APP_SECRET_KEY
 
-@app.template_filter('base16')
-def base16(color_element):
-    return int(color_element,16)
+@app.template_filter('foreground_color')
+def foreground_color(colorHEX):
+    if ( int(colorHEX[:2],16)*0.299 +
+         int(colorHEX[2:4],16)*0.587 +
+         int(colorHEX[4:6],16)*0.114 ) > 186:
+        return '#000000'
+    else:
+        return '#FFFFFF'
 
 def _empty_response():
     r = Response('')

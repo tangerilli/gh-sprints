@@ -200,7 +200,7 @@ $(function() {
                         {% if issue.labels %}
                             <ul class="list-unstyled list-inline issue-tag-list">
                                 {% for label in issue.labels %}
-                                    <li style="background:#{{label.color}};color:{% if (label.color[:2]|base16*0.299 + label.color[2:4]|base16*0.587 + label.color[4:6]|base16*0.114) > 186 %}#000000{% else %}#ffffff{% endif %};" class="issue-tag">
+                                    <li style="background:#{{label.color}};color:{{label.color|foreground_color}};" class="issue-tag">
                                         {{label.name}}
                                     </li>
                                 {% endfor %}
