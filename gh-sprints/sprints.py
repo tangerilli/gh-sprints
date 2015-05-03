@@ -11,7 +11,7 @@ from requests.auth import HTTPBasicAuth
 
 import settings
 from database import init_db, db_session
-from models import Sprint, Snapshot, IssueSnapshot
+from models import Sprint, Snapshot, IssueSnapshot, IssueLabel
 
 
 def _auth_get_request(url):
@@ -184,10 +184,30 @@ def print_sprints():
         print "{}\t\t{}".format(sprint.name, locked)
 
 
+def get_labels(repo):
+    """
+    Fetches all labels for issues and stores them in a database
+    """
+
+    url = 'https://api.github.com/repos/{}/{}/labels'.format(settings.ORG, repo)
+
+    issue_labels = _auth_get_request(url)
+    for label in issue_labels.json():
+        issue_label = IssueLabel(
+            color = label['color'],
+            name = label['name'],
+            url = label['url']
+        )
+        db_session.add(issue_label)
+
+    db_session.commit()
+    print "Committing labels..."
+
+
 def main(args):
     parser = argparse.ArgumentParser(description='7Geese Sprint Management Tool')
     parser.add_argument('command', type=str, help="The command to run",
-                        choices=['init', 'snapshot', 'stats', 'lock', 'unlock', 'sprints'])
+                        choices=['init', 'snapshot', 'stats', 'lock', 'unlock', 'sprints', 'labels'])
     parser.add_argument('-s', '--sprint', type=str, help="The sprint to operate on")
     args = parser.parse_args()
 
@@ -218,6 +238,11 @@ def main(args):
 
     if args.command == 'stats':
         print_stats(args.sprint)
+        return 0
+
+    if args.command == 'labels':
+        for repo in settings.REPOS:
+            get_labels(repo)
         return 0
 
     return 0
