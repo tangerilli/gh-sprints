@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, distinct
+from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import func
 
@@ -120,6 +120,19 @@ class IssueSnapshot(Base):
         self.snapshot = snapshot
         self.data = data
         self.state = state
+
+    @property
+    def sprint_count(self):
+        cursor = IssueSnapshot.query.with_entities(
+            func.count(distinct(Snapshot.sprint_id))).filter(
+            IssueSnapshot.issue_id == self.issue_id, IssueSnapshot.snapshot_id == Snapshot.id)
+        return cursor.scalar() or 0
+
+    @classmethod
+    def get_all_snapshots_for_issue(cls, repo, issue_id):
+        return IssueSnapshot.query.filter(
+            IssueSnapshot.issue_id == issue_id, IssueSnapshot.repo == repo).order_by(
+            IssueSnapshot.updated_at).options(joinedload('snapshot'))
 
 
 class SprintCommitment(Base):

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}#{{ issue.data.number }} - {{ issue.data.title }}{% endblock %}
+{% block header %}#{{ issue.data.number }} {{ issue.data.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h4>Appeared in the following sprints:</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sprint</th>
+                    <th>Point range</th>
+                    <th>States</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sprint in sprints %}
+                <tr>
+                    <td><a href="{{ url_for('sprint', sprint_id=sprint.sprint_data.id) }}">{{ sprint.sprint_data.name }}</a></td>
+                    <td>
+                        {% if sprint.min == sprint.max %}
+                            {{ sprint.min }}
+                        {% else %}
+                            {{ sprint.min }} - {{ sprint.max }}
+                        {% endif %}
+                    </td>
+                    <td>{{ ', '.join(sprint.states) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

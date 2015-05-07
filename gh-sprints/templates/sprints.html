@@ -40,7 +40,7 @@ $(function() {
         {% for sprint in sprints %}
         <tr>
             <td>
-                <a href="/sprints/{{sprint.model.id}}">{{ sprint.model.name }}</a>
+                <a href="{{ url_for('sprint', sprint_id=sprint.model.id) }}">{{ sprint.model.name }}</a>
                 {% if sprint.model.locked %}
                 <img src='/static/img/lock-16.png'>
                 {% endif %}
