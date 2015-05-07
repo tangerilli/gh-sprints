@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, distinct
+from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import func
 
@@ -105,6 +105,7 @@ class Snapshot(Base):
 class IssueSnapshot(Base):
     __tablename__ = 'issue_snapshots'
     id = Column(Integer, primary_key=True)
+    repo = Column(String(1024), nullable=True)
     issue_id = Column(Integer)
     points = Column(Integer)
     data = Column(postgresql.JSON)
@@ -112,12 +113,26 @@ class IssueSnapshot(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     state = Column(Integer)
 
-    def __init__(self, issue_id, points, state, snapshot, data):
+    def __init__(self, issue_id, repo, points, state, snapshot, data):
         self.issue_id = issue_id
+        self.repo = repo
         self.points = points
         self.snapshot = snapshot
         self.data = data
         self.state = state
+
+    @property
+    def sprint_count(self):
+        cursor = IssueSnapshot.query.with_entities(
+            func.count(distinct(Snapshot.sprint_id))).filter(
+            IssueSnapshot.issue_id == self.issue_id, IssueSnapshot.snapshot_id == Snapshot.id)
+        return cursor.scalar() or 0
+
+    @classmethod
+    def get_all_snapshots_for_issue(cls, repo, issue_id):
+        return IssueSnapshot.query.filter(
+            IssueSnapshot.issue_id == issue_id, IssueSnapshot.repo == repo).order_by(
+            IssueSnapshot.updated_at).options(joinedload('snapshot'))
 
 
 class SprintCommitment(Base):

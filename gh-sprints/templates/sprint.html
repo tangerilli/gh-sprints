@@ -190,13 +190,19 @@ $(function() {
                     <th>Issue</th>
                     <th>State</th>
                     <th>Committed</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                {% for issue, state in issues %}
+                {% for issue, state, snapshot, sprint_count in issues %}
                 <tr>
                     <td>
-                        <a href="{{issue.html_url}}" target="_blank">#{{issue.number}} - {{issue.title}}</a>
+                        <a href="{{issue.html_url}}" target="_blank">
+                            #{{issue.number}} - {{issue.title}}
+                        </a>
+                        {% if sprint_count > 1 %}
+                        <span class="label label-danger">{{sprint_count}} sprints</span>
+                        {% endif %}
                         {% if issue.labels %}
                             <ul class="list-unstyled list-inline issue-tag-list">
                                 {% for label in issue.labels %}
@@ -209,6 +215,7 @@ $(function() {
                     </td>
                     <td>{{states[state].label}}</td>
                     <td><input class="js-committed" type="checkbox" data-issue-id="{{issue.number}}" {% if issue.number in committed_issues %}checked{% endif %}></td>
+                    <td><a href="{{ url_for('issue', repo=snapshot.repo, issue_id=issue.number) }}">Stats</a>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -14,9 +14,9 @@ app.secret_key = settings.APP_SECRET_KEY
 
 @app.template_filter('foreground_color')
 def foreground_color(colorHEX):
-    if ( int(colorHEX[:2],16)*0.299 +
-         int(colorHEX[2:4],16)*0.587 +
-         int(colorHEX[4:6],16)*0.114 ) > 186:
+    if (int(colorHEX[:2], 16)*0.299 +
+        int(colorHEX[2:4], 16)*0.587 +
+            int(colorHEX[4:6], 16)*0.114) > 186:
         return '#000000'
     else:
         return '#FFFFFF'
@@ -91,7 +91,7 @@ def sprint(sprint_id):
         # Get all of the issues captured in the latest snapshot
         current_snapshot = snapshots[-1]
         issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == current_snapshot.id)
-        issues = sorted([(issue.data, issue.state) for issue in issue_snapshots], key=lambda x: x[1])
+        issues = sorted([(issue.data, issue.state, issue, issue.sprint_count) for issue in issue_snapshots], key=lambda x: x[1])
         committed_issues = [commitment.issue_id for commitment in sprint.commitments]
 
         context = {
@@ -129,6 +129,32 @@ def edit_committments(sprint_id):
 def do_snapshot():
     monitor_sprints()
     return _empty_response()
+
+
+@app.route('/issues/<repo>/<issue_id>', methods=['GET'])
+def issue(repo, issue_id):
+    states = {state['id']: state for state in settings.ISSUE_STATES}
+
+    snapshots = IssueSnapshot.get_all_snapshots_for_issue(repo, issue_id)
+    sprints = {}
+    for issue_snapshot in snapshots:
+        sprint = sprints.setdefault(issue_snapshot.snapshot.sprint_id, {
+            'min': issue_snapshot.points,
+            'max': issue_snapshot.points,
+            'sprint_data': issue_snapshot.snapshot.sprint,
+            'states': [],
+        })
+        sprint['min'] = min(sprint['min'], issue_snapshot.points)
+        sprint['max'] = max(sprint['max'], issue_snapshot.points)
+        state_label = states[issue_snapshot.state]['label']
+        if state_label not in sprint['states']:
+            sprint['states'].append(state_label)
+
+    context = {
+        'sprints': sorted(sprints.values(), key=lambda sprint: sprint['sprint_data'].finished),
+        'issue': snapshots[-1]
+    }
+    return render_template('issue.html', **context)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
