@@ -22,6 +22,14 @@
   </head>
   <body>
     <div class='container-fluid'>
+      <div class="row header">
+        <div class="col-md-2">
+          <a href="{{ url_for('sprints') }}">Home</a>
+        </div>
+        <div class="col-md-2 col-md-offset-8 logout">
+          <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+      </div>
       <div class="row">
         <div class="col-md-6 col-md-offset-3">
           <h2 class="title">{% block header %}{% endblock %}</h2>

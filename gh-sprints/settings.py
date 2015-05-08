@@ -1,11 +1,17 @@
 import re
 
-# Your github API token
+# Your github API token for snapshotting sprint data
 TOKEN = ''
 # Your github organization name
 ORG = ''
 # The github repos owned by that organization which you want to monitor
 REPOS = []
+
+# Github App data to use for authorization
+GITHUB_APP_ID = ''
+GITHUB_APP_SECRET = ''
+# The organization that a user must be a member of in order to login
+REQUIRED_ORG = ''
 
 JSON_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 TIMEZONE = 'Canada/Pacific'
