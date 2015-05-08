@@ -145,3 +145,24 @@ class SprintCommitment(Base):
     def __init__(self, sprint_id, issue_id):
         self.sprint_id = sprint_id
         self.issue_id = issue_id
+
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    username = Column(String(1024))
+    access_token = Column(String(1024))
+    active = Column(Boolean, default=True)
+
+    def __init__(self, username, access_token=None):
+        self.username = username
+        self.access_token = access_token
+
+    def is_active(self):
+        return self.active
+
+    def get_id(self):
+        return self.id
+
+    def is_authenticated(self):
+        return True
