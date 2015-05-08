@@ -260,7 +260,12 @@ def authorize():
 @app.route('/logout', methods=['GET'])
 def logout():
     logout_user()
-    return render_template('logout.html')
+    return redirect(url_for('welcome'))
+
+
+@app.route('/welcome', methods=['GET'])
+def welcome():
+    return render_template('welcome.html')
 
 
 login_manager.init_app(app)
