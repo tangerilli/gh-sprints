@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Github Sprints - Login{% endblock %}
+{% block header %}Github Sprints - Login{% endblock %}
+
+{% block auth %}
+<a href="{{ url_for('login') }}">Login</a>
+{% endblock %}
+
+{% block content %}
+<div class="alert alert-danger" role="alert">Error: {{ error }}</div>
+{% endblock %}

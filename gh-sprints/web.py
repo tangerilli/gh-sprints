@@ -225,9 +225,7 @@ def _get_orgs(token):
 def authorize():
     state = request.args['state']
     if state != str(session['oauth_state']):
-        print state
-        print session['oauth_state']
-        return make_response('Bad state', status_code=HTTP_BAD_REQUEST)
+        return render_template('login.html', error='Invalid state')
     code = request.args['code']
     token_url = 'https://github.com/login/oauth/access_token'
     params = {
@@ -241,7 +239,7 @@ def authorize():
     token = r.json()['access_token']
     orgs = _get_orgs(token)
     if settings.REQUIRED_ORG not in [org['login'] for org in orgs]:
-        return make_response("Organization requirement not met", status_code=HTTP_UNAUTHORIZED)
+        return render_template('login.html', error='Organization requirement not met')
     user_info = _get_user_info(token)
     username = user_info['login']
 
@@ -252,7 +250,7 @@ def authorize():
         db_session.commit()
 
     if not login_user(user, remember=True):
-        return make_response('Login error', status_code=HTTP_UNAUTHORIZED)
+        return render_template('login.html', error='Unknown login error')
 
     return redirect(url_for('sprints'))
 
