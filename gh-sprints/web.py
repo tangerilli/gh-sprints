@@ -58,7 +58,7 @@ def shutdown_session(exception=None):
 @login_required
 def sprints():
     sprints = []
-    for sprint in Sprint.query.order_by(Sprint.finished):
+    for sprint in Sprint.query.order_by(Sprint.finished.desc()):
         snapshot = sprint.last_snapshot
         if snapshot is None:
             continue
