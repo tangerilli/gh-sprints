@@ -10,16 +10,16 @@
    - completion percentage (progress) over time (same as for sprint)
      - On same graph, display total points
    - The current counts of completed points, remaining points and total points
+- [ ] auto-move issues into the next sprint on Friday afternoons
 - [ ] try to figure out who worked on issues and provide counts
  - could look at comments to figure out who gave +1, and at commit history to just include anyone who committed
-
 - [ ] Have a cooler visualization on the issue page - something like a horizontal bar for each sprint, with the bar broken up into coloured chunks for each state the issue was in (so you can see how long it was in each state, and how those periods spanned sprints)
+
 - [ ] on homepage, display both committed completion and total completion
  - maybe with little bar graphs?
 - [ ] start date for a sprint (maybe derive by default, but allow it to be editable)
 - [ ] spark line in homepage list
 - [ ] configurable granularity on sprint page (i.e. only one snapshot per day or per hour or whatever)
-- [ ] auto-move issues into the next sprint on Friday afternoons
 - [ ] have somewhere to enter how long the meetings are, and show that in a graph (TOP PRIORITY)
 - [ ] make it look pretty
 - [ ] consider turning the whole thing into the usual frontend app/backend api thing, with an actual frontend framework, blah blah blah
