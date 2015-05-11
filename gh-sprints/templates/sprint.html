@@ -249,7 +249,7 @@ $(function() {
                 <tr>
                     <th>Total</th>
                     {% for snapshot in snapshots %}
-                    <td><strong>{{ snapshot.total_points }}</strong></td>
+                    <td><strong>{{ snapshot.total_points() }}</strong></td>
                     {% endfor %}
                 </tr>
             </tbody>

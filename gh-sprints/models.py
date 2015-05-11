@@ -44,6 +44,21 @@ class Sprint(Base):
             filtered_snapshots.append(snapshot)
         return filtered_snapshots
 
+    def get_stats(self, committed=False):
+        snapshots = self.get_snapshots()
+        completed = [snapshot.completed_points(committed=committed) for snapshot in snapshots]
+        remaining = [snapshot.remaining_points(committed=committed) for snapshot in snapshots]
+        totals = [snapshot.total_points(committed=committed) for snapshot in snapshots]
+        stats = {
+            'completed': completed,
+            'remaining': remaining,
+            'total': totals,
+            'dates': [snapshot.local_timestamp.strftime('%d/%m') for snapshot in snapshots],
+        }
+        if totals[-1]:
+            stats['completion'] = int((float(completed[-1]) / (totals[-1])) * 100)
+        return stats
+
 
 class Snapshot(Base):
     __tablename__ = 'snapshots'
@@ -70,31 +85,15 @@ class Snapshot(Base):
             cursor = cursor.filter(IssueSnapshot.issue_id.in_(commitments))
         return cursor.scalar() or 0
 
-    @property
-    def total_points(self):
-        return self.get_points_for_states()
+    def total_points(self, committed=False):
+        return self.get_points_for_states(committed_only=committed)
 
-    @property
-    def total_points_committed(self):
-        return self.get_points_for_states(committed_only=True)
+    def completed_points(self, committed=False):
+        return self.get_points_for_states(settings.COMPLETE_STATES, committed_only=committed)
 
-    @property
-    def completed_points(self):
-        return self.get_points_for_states(settings.COMPLETE_STATES)
-
-    @property
-    def remaining_points(self):
+    def remaining_points(self, committed=False):
         incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
-        return self.get_points_for_states(incomplete_states)
-
-    @property
-    def completed_points_committed(self):
-        return self.get_points_for_states(settings.COMPLETE_STATES, committed_only=True)
-
-    @property
-    def remaining_points_committed(self):
-        incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
-        return self.get_points_for_states(incomplete_states, committed_only=True)
+        return self.get_points_for_states(incomplete_states, committed_only=committed)
 
     @property
     def local_timestamp(self):
@@ -123,9 +122,12 @@ class IssueSnapshot(Base):
 
     @property
     def sprint_count(self):
+        """
+        The number of sprints this issue appeared in
+        """
         cursor = IssueSnapshot.query.with_entities(
             func.count(distinct(Snapshot.sprint_id))).filter(
-            IssueSnapshot.issue_id == self.issue_id, IssueSnapshot.snapshot_id == Snapshot.id)
+            IssueSnapshot.issue_id == self.issue_id, IssueSnapshot.repo == self.repo, IssueSnapshot.snapshot_id == Snapshot.id)
         return cursor.scalar() or 0
 
     @classmethod
