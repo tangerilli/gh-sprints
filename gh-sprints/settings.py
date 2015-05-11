@@ -77,6 +77,10 @@ COMPLETE_STATES = [3, 4]
 # In the example below, issue titles should look like "(SP3) Some issue" for a 3 point issue
 POINT_PATTERN = re.compile("\(SP(\d+)\)")
 
+# The port the flask dev server will listen on
+LISTEN_PORT = 8080
+
+
 try:
     from local_settings import *
 except:
