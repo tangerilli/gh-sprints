@@ -21,6 +21,26 @@ $(function() {
             $('.js-do-snapshot').addClass('btn-primary');
         });
     });
+
+    function getSelectedSprints() {
+        var sprints = [];
+        $('.js-sprint:checked').each(function() {
+            sprints.push($(this).data('sprint-id'));
+        });
+        return sprints;
+    }
+
+    $('.js-view-combined').click(function() {
+        window.location = "{{ url_for('sprint', sprint_ids='XX') }}".replace('XX', getSelectedSprints().join(','));
+    });
+
+    $('.js-sprint').click(function() {
+        if (getSelectedSprints().length > 0) {
+            $('.js-view-combined').removeClass('disabled');
+        } else {
+            $('.js-view-combined').addClass('disabled');
+        }
+    });
 });
 </script>
 {% endblock %}
@@ -40,7 +60,8 @@ $(function() {
         {% for sprint in sprints %}
         <tr>
             <td>
-                <a href="{{ url_for('sprint', sprint_id=sprint.model.id) }}">{{ sprint.model.name }}</a>
+                <input type="checkbox" class="js-sprint" data-sprint-id="{{sprint.model.id}}">
+                <a href="{{ url_for('sprint', sprint_ids=sprint.model.id) }}">{{ sprint.model.name }}</a>
                 {% if sprint.model.locked %}
                 <img src='/static/img/lock-16.png'>
                 {% endif %}
@@ -54,5 +75,6 @@ $(function() {
     </tbody>
 </table>
 
+<button class="btn btn-primary disabled js-view-combined">View Combined</button>
 <button class="btn btn-primary js-do-snapshot">Update</button>
 {% endblock %}

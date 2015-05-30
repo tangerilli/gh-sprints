@@ -5,7 +5,7 @@ from flask import render_template
 from flask.ext.login import login_required
 
 from database import db_session
-from models import Sprint, IssueSnapshot, SprintCommitment
+from models import Sprint, IssueSnapshot, SprintCommitment, Snapshot, get_stats_for_snapshots
 from sprints import monitor_sprints
 from authorization import setup_authorization
 
@@ -55,34 +55,54 @@ def sprints():
     return render_template('sprints.html', sprints=sprints)
 
 
-@app.route('/sprints/<sprint_id>', methods=['GET', 'PATCH'])
+@app.route('/sprints/<sprint_ids>', methods=['GET', 'PATCH'])
 @login_required
-def sprint(sprint_id):
-    sprint = Sprint.query.filter(Sprint.id == sprint_id).first()
+def sprint(sprint_ids):
+    ids = sprint_ids.split(',')
     if request.method == 'GET':
-        snapshots = sprint.get_snapshots()
+        sprints = []
+        snapshots = []
+        last_snapshots = []
+        issues = []
+        committed_issues = []
         states = _get_states_dict()
+        for sprint_id in ids:
+            sprint = Sprint.query.filter(Sprint.id == sprint_id).first()
+            sprints.append(sprint)
+            sprint_snapshots = sprint.get_snapshots()
+            snapshots.extend(sprint_snapshots)
+            last_snapshots.append(sprint_snapshots[-1])
+
+            # Get all of the issues captured in the latest snapshot
+            issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == sprint.last_snapshot.id)
+            issues.extend([(issue.data, issue.state, issue, issue.sprint_count) for issue in issue_snapshots])
+            committed_issues.extend([commitment.issue_id for commitment in sprint.commitments])
 
         stats = {
-            'all': sprint.get_stats(),
-            'committed': sprint.get_stats(committed=True)
+            'all': get_stats_for_snapshots(snapshots),
+            'committed': get_stats_for_snapshots(snapshots, committed=True)
         }
 
-        # Get all of the issues captured in the latest snapshot
-        issue_snapshots = IssueSnapshot.query.filter(IssueSnapshot.snapshot_id == sprint.last_snapshot.id)
-        issues = sorted([(issue.data, issue.state, issue, issue.sprint_count) for issue in issue_snapshots], key=lambda x: x[1])
-        committed_issues = [commitment.issue_id for commitment in sprint.commitments]
+        snapshot_ids = [snapshot.id for snapshot in last_snapshots]
+        issue_state_stats = {
+            'all': {state: Snapshot.get_points_for_states(snapshot_ids, ids, [state]) for state in states.keys()},
+            'committed': {state: Snapshot.get_points_for_states(snapshot_ids, ids, [state], True) for state in states.keys()}
+        }
 
         context = {
-            'sprint': sprint,
+            'sprints': sprints,
             'snapshots': snapshots,
             'states': states,
             'stats': stats,
-            'issues': issues,
+            'issue_state_stats': issue_state_stats,
+            'issues': sorted(issues, key=lambda x: x[1]),
             'committed_issues': committed_issues
         }
         return render_template('sprint.html', **context)
     elif request.method == 'PATCH':
+        if len(ids) > 1:
+            return Response('Can only update one sprint at a time'), httplib.BAD_REQUEST
+        sprint = Sprint.query.filter(Sprint.id == ids[0]).first()
         for name, value in request.json.items():
             if hasattr(sprint, name):
                 setattr(sprint, name, value)

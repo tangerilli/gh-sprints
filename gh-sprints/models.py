@@ -1,4 +1,5 @@
 from datetime import datetime
+import itertools
 
 import pytz
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, distinct
@@ -8,6 +9,57 @@ from sqlalchemy import func
 
 from database import Base
 import settings
+
+
+def _find_sprint_snapshot(sprint_id, groups):
+    for group in groups:
+        for snapshot in group:
+            if snapshot.sprint_id == sprint_id:
+                return snapshot
+    return None
+
+
+def get_stats_for_snapshots(snapshots, committed=False):
+    # First group the snapshots by date
+    snapshots = sorted(snapshots, key=lambda snapshot: snapshot.timestamp)
+    grouped_snapshots = [list(group) for k, group in itertools.groupby(
+        snapshots, key=lambda snapshot: snapshot.local_timestamp.date())]
+
+    # figure out which sprints should be in each group
+    expected_sprints = set()
+    for group in grouped_snapshots:
+        expected_sprints.update([snapshot.sprint_id for snapshot in group])
+    print "expected_sprints = {}".format(expected_sprints)
+
+    # then fill in any blanks by copying snapshots forward or backward if a group doesn't have one
+    # for a specific sprint
+    for i, group in enumerate(grouped_snapshots):
+        if len(group) < len(expected_sprints):
+            missing_sprints = expected_sprints.difference([snapshot.sprint_id for snapshot in group])
+            for sprint_id in missing_sprints:
+                # first look backwards for a snapshot from this sprint
+                snapshot = _find_sprint_snapshot(sprint_id, reversed(grouped_snapshots[:i]))
+                if not snapshot:
+                    # if we couldn't find one, then look forwards
+                    snapshot = _find_sprint_snapshot(sprint_id, grouped_snapshots[i+1:])
+                if not snapshot:
+                    print "Couldn't find snapshot to fill in gap"
+                else:
+                    group.append(snapshot)
+
+    completed = [sum([snapshot.completed_points(committed=committed) for snapshot in group]) for group in grouped_snapshots]
+    remaining = [sum([snapshot.remaining_points(committed=committed) for snapshot in group]) for group in grouped_snapshots]
+    totals = [sum([snapshot.total_points(committed=committed) for snapshot in group]) for group in grouped_snapshots]
+
+    stats = {
+        'completed': completed,
+        'remaining': remaining,
+        'total': totals,
+        'dates': [group[0].local_timestamp.strftime('%d/%m') for group in grouped_snapshots],
+    }
+    if totals[-1]:
+        stats['completion'] = int((float(completed[-1]) / (totals[-1])) * 100)
+    return stats
 
 
 class Sprint(Base):
@@ -44,21 +96,6 @@ class Sprint(Base):
             filtered_snapshots.append(snapshot)
         return filtered_snapshots
 
-    def get_stats(self, committed=False):
-        snapshots = self.get_snapshots()
-        completed = [snapshot.completed_points(committed=committed) for snapshot in snapshots]
-        remaining = [snapshot.remaining_points(committed=committed) for snapshot in snapshots]
-        totals = [snapshot.total_points(committed=committed) for snapshot in snapshots]
-        stats = {
-            'completed': completed,
-            'remaining': remaining,
-            'total': totals,
-            'dates': [snapshot.local_timestamp.strftime('%d/%m') for snapshot in snapshots],
-        }
-        if totals[-1]:
-            stats['completion'] = int((float(completed[-1]) / (totals[-1])) * 100)
-        return stats
-
 
 class Snapshot(Base):
     __tablename__ = 'snapshots'
@@ -75,25 +112,26 @@ class Snapshot(Base):
         return Snapshot.query.filter(Snapshot.sprint_id == sprint.id).order_by(
             Snapshot.timestamp.desc()).first()
 
-    def get_points_for_states(self, states=[], committed_only=False):
+    @classmethod
+    def get_points_for_states(cls, snapshots, sprints, states=[], committed_only=False):
         cursor = IssueSnapshot.query.with_entities(func.sum(IssueSnapshot.points)).filter(
-            IssueSnapshot.snapshot_id == self.id)
+            IssueSnapshot.snapshot_id.in_(snapshots))
         if states:
             cursor = cursor.filter(IssueSnapshot.state.in_(states))
         if committed_only:
-            commitments = [c.issue_id for c in SprintCommitment.query.filter(SprintCommitment.sprint_id == self.sprint_id)]
+            commitments = [c.issue_id for c in SprintCommitment.query.filter(SprintCommitment.sprint_id.in_(sprints))]
             cursor = cursor.filter(IssueSnapshot.issue_id.in_(commitments))
         return cursor.scalar() or 0
 
     def total_points(self, committed=False):
-        return self.get_points_for_states(committed_only=committed)
+        return Snapshot.get_points_for_states([self.id], [self.sprint_id], committed_only=committed)
 
     def completed_points(self, committed=False):
-        return self.get_points_for_states(settings.COMPLETE_STATES, committed_only=committed)
+        return Snapshot.get_points_for_states([self.id], [self.sprint_id], settings.COMPLETE_STATES, committed_only=committed)
 
     def remaining_points(self, committed=False):
         incomplete_states = [state['id'] for state in settings.ISSUE_STATES if state['id'] not in settings.COMPLETE_STATES]
-        return self.get_points_for_states(incomplete_states, committed_only=committed)
+        return Snapshot.get_points_for_states([self.id], [self.sprint_id], incomplete_states, committed_only=committed)
 
     @property
     def local_timestamp(self):

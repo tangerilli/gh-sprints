@@ -2,8 +2,10 @@
 - [x] show tags beside issue titles
 - [ ] have a button to commit all of the current issues in the list for a sprint ("check all" button?)
 - [x] authentication support
-- [ ] ability to view a consolidation of sprints (i.e. just take all the data for two or more sprints, and present it as if it were one)
-  - Should also be able to view the velocity calculated over the selected sprints
+- [x] ability to view a consolidation of sprints (i.e. just take all the data for two or more sprints, and present it as if it were one)
+  - [ ] Should also be able to view the velocity calculated over the selected sprints
+- [ ] Generate probability of completion time stats for different issues sizes
+  - Take all the issues of a certain size, look at how much absolute time they took to move from building to ready for deploy, and create a probability distribution
 - [ ] a project view. Allow selection of a label, and display all of the issues associated with that label, with stats
  - user has to choose the labels they want to monitor. issues don't get included in the snapshot until they're monitored
  - separate snapshots are created for these projects (but the snapshot can (potentially) reference the same issue snapshots (??))
