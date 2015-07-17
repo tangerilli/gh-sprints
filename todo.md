@@ -1,3 +1,5 @@
+- [ ] have somewhere to enter how long the meetings are, and show that in a graph (TOP PRIORITY)
+- [ ] show the person's GH avatar beside an issue if they're assigned to it
 - [x] add a readme
 - [x] show tags beside issue titles
 - [ ] have a button to commit all of the current issues in the list for a sprint ("check all" button?)
@@ -23,7 +25,6 @@
 - [ ] start date for a sprint (maybe derive by default, but allow it to be editable)
 - [ ] spark line in homepage list
 - [ ] configurable granularity on sprint page (i.e. only one snapshot per day or per hour or whatever)
-- [ ] have somewhere to enter how long the meetings are, and show that in a graph (TOP PRIORITY)
 - [ ] make it look pretty
 - [ ] consider turning the whole thing into the usual frontend app/backend api thing, with an actual frontend framework, blah blah blah
 - [ ] Use LESS/Coffeescript/etc..
