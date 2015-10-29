@@ -1,20 +1,41 @@
+from operator import attrgetter
+
+
 class LabelStatistics(object):
-    """
-    Statistics for a given label
-    """
 
-    def __init__(self):
+    def __init__(self, name, collection):
+        self.name = name
         self.issues = []
-
-    @property
-    def total_story_points(self):
-        points = 0
-        for issue in self.issues:
-            points += issue.points
-
-        return points
+        self.total_story_points = 0
+        self.collection = collection
 
     def add_issue(self, issue):
         self.issues.append(issue)
+        self.total_story_points += issue.points
+
+    @property
+    def story_points_as_percentage(self):
+        percentage = (float(self.total_story_points) / float(self.collection.total_story_points)) * 100
+        return int(round(percentage, 0))
 
 
+class LabelStatisticsCollection(object):
+
+    def __init__(self, total_story_points=0):
+        self.labels_by_name = {}
+        self.total_story_points = total_story_points
+
+    def add_issue(self, issue):
+        for label in issue.labels:
+            label_name = label['name']
+
+            if label_name not in self.labels_by_name:
+                self.labels_by_name[label_name] = LabelStatistics(label_name, self)
+
+            self.labels_by_name[label_name].add_issue(issue)
+
+    def sort_by_effort(self):
+        labels = self.labels_by_name.values()
+        sorted_labels = sorted(labels, key=attrgetter('total_story_points'))
+        sorted_labels.reverse()
+        return sorted_labels
