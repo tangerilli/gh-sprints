@@ -1,4 +1,5 @@
 import httplib
+from collections import defaultdict
 
 from flask import Flask, request, Response
 from flask import render_template
@@ -8,6 +9,7 @@ from database import db_session
 from models import Sprint, IssueSnapshot, SprintCommitment, Snapshot, get_stats_for_snapshots
 from sprints import monitor_sprints
 from authorization import setup_authorization
+from statistics import LabelStatistics
 
 import settings
 
@@ -80,7 +82,8 @@ def sprint(sprint_ids):
 
         stats = {
             'all': get_stats_for_snapshots(snapshots),
-            'committed': get_stats_for_snapshots(snapshots, committed=True)
+            'committed': get_stats_for_snapshots(snapshots, committed=True),
+            'label_stats': _get_label_statistics(sprints),
         }
 
         snapshot_ids = [snapshot.id for snapshot in last_snapshots]
@@ -108,6 +111,22 @@ def sprint(sprint_ids):
                 setattr(sprint, name, value)
             db_session.commit()
         return Response(''), httplib.NO_CONTENT
+
+
+def _get_label_statistics(sprints):
+    """
+    :type sprints list
+    :rtype {string: LabelStatistics}
+    """
+    issues_by_label = defaultdict(LabelStatistics)
+    for curr_sprint in sprints:
+        issues = curr_sprint.last_snapshot.get_completed_issues()
+        for curr_issue in issues:
+            for label in curr_issue.labels:
+                label_name = label['name']
+                issues_by_label[label_name].add_issue(curr_issue)
+
+    return issues_by_label
 
 
 @app.route('/sprints/<sprint_id>/commitments', methods=['POST'])

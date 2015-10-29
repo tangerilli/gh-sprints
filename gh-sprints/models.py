@@ -113,7 +113,10 @@ class Snapshot(Base):
             Snapshot.timestamp.desc()).first()
 
     @classmethod
-    def get_points_for_states(cls, snapshots, sprints, states=[], committed_only=False):
+    def get_points_for_states(cls, snapshots, sprints, states=None, committed_only=False):
+        if states is None:
+            states = []
+
         cursor = IssueSnapshot.query.with_entities(func.sum(IssueSnapshot.points)).filter(
             IssueSnapshot.snapshot_id.in_(snapshots))
         if states:
@@ -122,6 +125,14 @@ class Snapshot(Base):
             commitments = [c.issue_id for c in SprintCommitment.query.filter(SprintCommitment.sprint_id.in_(sprints))]
             cursor = cursor.filter(IssueSnapshot.issue_id.in_(commitments))
         return cursor.scalar() or 0
+
+    def get_completed_issues(self):
+        completed_issues = []
+        for issue in self.issues:
+            if issue.state in settings.COMPLETE_STATES:
+                completed_issues.append(issue)
+
+        return completed_issues
 
     def total_points(self, committed=False):
         return Snapshot.get_points_for_states([self.id], [self.sprint_id], committed_only=committed)
@@ -168,11 +179,18 @@ class IssueSnapshot(Base):
             IssueSnapshot.issue_id == self.issue_id, IssueSnapshot.repo == self.repo, IssueSnapshot.snapshot_id == Snapshot.id)
         return cursor.scalar() or 0
 
+    @property
+    def labels(self):
+        return self.data['labels']
+
     @classmethod
     def get_all_snapshots_for_issue(cls, repo, issue_id):
         return IssueSnapshot.query.filter(
             IssueSnapshot.issue_id == issue_id, IssueSnapshot.repo == repo).order_by(
             IssueSnapshot.updated_at).options(joinedload('snapshot'))
+
+    def is_complete(self):
+        return self.state in settings.COMPLETE_STATES
 
 
 class SprintCommitment(Base):

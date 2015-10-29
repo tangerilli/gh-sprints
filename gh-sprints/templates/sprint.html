@@ -229,6 +229,17 @@ $(function() {
 
 <hr>
 
+<h3>Issues by label</h3>
+<ul>
+    {% for label_name, label_stats in stats.label_stats.iteritems() %}
+    <li>
+        <strong>{{ label_name }}</strong>: {{ label_stats.total_story_points }} / {{ stats.all.total[-1] }}
+    </li>
+    {% endfor %}
+</ul>
+
+<hr>
+
 <div class="row">
     <div class="col-md-12">
         <h4>Snapshots</h4>
