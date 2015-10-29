@@ -15,15 +15,15 @@ class LabelStatistics(object):
 
     @property
     def story_points_as_percentage(self):
-        percentage = (float(self.total_story_points) / float(self.collection.total_story_points)) * 100
+        percentage = (float(self.total_story_points) / float(self.collection.completed_story_points)) * 100
         return int(round(percentage, 0))
 
 
 class LabelStatisticsCollection(object):
 
-    def __init__(self, total_story_points=0):
+    def __init__(self, completed_story_points=0):
         self.labels_by_name = {}
-        self.total_story_points = total_story_points
+        self.completed_story_points = completed_story_points
 
     def add_issue(self, issue):
         for label in issue.labels:

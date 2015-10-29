@@ -80,11 +80,11 @@ def sprint(sprint_ids):
             committed_issues.extend([commitment.issue_id for commitment in sprint.commitments])
 
         stats_for_all_issues = get_stats_for_snapshots(snapshots)
-        total_story_points = stats_for_all_issues['total'][-1]
+        completed_story_points = stats_for_all_issues['completed'][-1]
         stats = {
             'all': stats_for_all_issues,
             'committed': get_stats_for_snapshots(snapshots, committed=True),
-            'label_stats': _get_label_statistics(sprints, total_story_points),
+            'label_stats': _get_label_statistics(sprints, completed_story_points),
         }
 
         snapshot_ids = [snapshot.id for snapshot in last_snapshots]
@@ -114,12 +114,12 @@ def sprint(sprint_ids):
         return Response(''), httplib.NO_CONTENT
 
 
-def _get_label_statistics(sprints, total_story_points):
+def _get_label_statistics(sprints, completed_story_points):
     """
     :type sprints list
     :rtype {string: LabelStatistics}
     """
-    label_statistics = LabelStatisticsCollection(total_story_points)
+    label_statistics = LabelStatisticsCollection(completed_story_points)
 
     for curr_sprint in sprints:
         issues = curr_sprint.last_snapshot.get_completed_issues()
