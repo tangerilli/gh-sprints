@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import unicode_literals
+
 from operator import attrgetter
 
 
@@ -15,7 +18,7 @@ class LabelStatistics(object):
 
     @property
     def story_points_as_percentage(self):
-        percentage = (float(self.total_story_points) / float(self.collection.completed_story_points)) * 100
+        percentage = (self.total_story_points / self.collection.completed_story_points) * 100
         return int(round(percentage, 0))
 
 

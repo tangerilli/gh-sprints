@@ -8,9 +8,9 @@ from database import db_session
 from models import Sprint, IssueSnapshot, SprintCommitment, Snapshot, get_stats_for_snapshots
 from sprints import monitor_sprints
 from authorization import setup_authorization
-from statistics import LabelStatistics, LabelStatisticsCollection
-
+from statistics import LabelStatisticsCollection
 import settings
+
 
 app = Flask(__name__)
 app.debug = settings.APP_DEBUG
