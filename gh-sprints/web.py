@@ -159,6 +159,37 @@ def issue(repo, issue_id):
     return render_template('issue.html', **context)
 
 
+@app.route('/stats/<sprint_ids>', methods=['GET'])
+@app.route('/stats/', methods=['GET'])
+@login_required
+def stats(sprint_ids=''):
+    ids = sprint_ids.split(',')
+    issue_ids = set()
+    if sprint_ids:
+        for sprint_id in ids:
+            # todo: this is pretty brute force right now, should be able to
+            # write a smarter query to get all the issues associated with a sprint
+            sprint = Sprint.query.filter(Sprint.id == sprint_id).first()
+            for snapshot in sprint.snapshots:
+                for issue in snapshot.issues:
+                    issue_ids.add((issue.issue_id, issue.repo))
+    else:
+        issue_ids = IssueSnapshot.query.distinct(IssueSnapshot.issue_id).values(IssueSnapshot.issue_id, IssueSnapshot.repo)
+
+    times = {}
+    for issue_id, repo in issue_ids:
+        elapsed = IssueSnapshot.get_time_in_states(repo, issue_id, settings.BUILD_STATES, settings.COMPLETE_STATES)
+        max_points = IssueSnapshot.get_max_points(repo, issue_id)
+        if elapsed:
+            times.setdefault(max_points, []).append(elapsed.total_seconds() / 60.0)
+
+    context = {
+        'times': times,
+        'included_issues': sum([len(t) for t in times.values()])
+    }
+    return render_template('stats.html', **context)
+
+
 @app.route('/welcome', methods=['GET'])
 def welcome():
     return render_template('welcome.html')

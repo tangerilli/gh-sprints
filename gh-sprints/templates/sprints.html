@@ -34,6 +34,11 @@ $(function() {
         window.location = "{{ url_for('sprint', sprint_ids='XX') }}".replace('XX', getSelectedSprints().join(','));
     });
 
+    $('.js-get-stats').click(function() {
+        // TODO: Put a spinner up while the page is loading
+        window.location = "{{ url_for('stats', sprint_ids='XX')}}".replace('XX', getSelectedSprints().join(','));
+    });
+
     $('.js-sprint').click(function() {
         if (getSelectedSprints().length > 0) {
             $('.js-view-combined').removeClass('disabled');
@@ -77,4 +82,6 @@ $(function() {
 
 <button class="btn btn-primary disabled js-view-combined">View Combined</button>
 <button class="btn btn-primary js-do-snapshot">Update</button>
+<button class="btn btn-primary js-get-stats">Stats</button>
+
 {% endblock %}

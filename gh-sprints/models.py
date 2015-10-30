@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import itertools
 
 import pytz
@@ -173,6 +173,40 @@ class IssueSnapshot(Base):
         return IssueSnapshot.query.filter(
             IssueSnapshot.issue_id == issue_id, IssueSnapshot.repo == repo).order_by(
             IssueSnapshot.updated_at).options(joinedload('snapshot'))
+
+    @classmethod
+    def get_time_in_states(cls, repo, issue_id, start_states, end_states):
+        snapshots = IssueSnapshot.get_all_snapshots_for_issue(repo, issue_id).all()
+        # the start time is the first time an issue entered one of the start states
+        start_time = None
+        # the end time is the first time an issue entered the end states
+        end_time = None
+        for snapshot in snapshots:
+            if snapshot.state in start_states and not start_time:
+                start_time = snapshot.updated_at
+            if snapshot.state in end_states and not end_time:
+                end_time = snapshot.updated_at
+            if start_time and end_time:
+                break
+
+        if start_time is None or end_time is None:
+            return None
+
+        # discount any weekends
+        weekends = 0
+        cursor = start_time.date()
+        while cursor != end_time.date():
+            if cursor.weekday() in (5, 6):
+                weekends += 1
+            cursor = cursor + timedelta(days=1)
+
+        duration = end_time - start_time - timedelta(days=weekends)
+        return duration if duration.total_seconds() > 0 else 0
+
+    @classmethod
+    def get_max_points(cls, repo, issue_id):
+        snapshots = IssueSnapshot.query.filter(IssueSnapshot.issue_id == issue_id, IssueSnapshot.repo == repo)
+        return snapshots.with_entities(func.max(IssueSnapshot.points)).scalar()
 
 
 class SprintCommitment(Base):

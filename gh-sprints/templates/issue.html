@@ -18,7 +18,7 @@
             <tbody>
                 {% for sprint in sprints %}
                 <tr>
-                    <td><a href="{{ url_for('sprint', sprint_id=sprint.sprint_data.id) }}">{{ sprint.sprint_data.name }}</a></td>
+                    <td><a href="{{ url_for('sprint', sprint_ids=sprint.sprint_data.id) }}">{{ sprint.sprint_data.name }}</a></td>
                     <td>
                         {% if sprint.min == sprint.max %}
                             {{ sprint.min }}

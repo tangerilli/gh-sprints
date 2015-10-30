@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Stats{% endblock %}
+{% block header %}Stats{% endblock %}
+
+{% block js %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'></script>
+<script src="/static/js/Chart.min.js"></script>
+<script src="/static/js/raphael.2.1.0.min.js"></script>
+
+<script>
+function generateTimeGraphs(unit, times_by_points_in_seconds) {
+    _.each(times_by_points_in_seconds, function(times_in_seconds, points) {
+        var buckets = {};
+        _.each(times_in_seconds, function(time) {
+            var bucket = Math.round(time / unit.divisor);
+            if (!buckets[bucket]) {
+                buckets[bucket] = 0;
+            }
+            buckets[bucket] = buckets[bucket] + 1;
+        });
+        var bucketKeys = _.keys(buckets);
+        bucketKeys.sort(function(a, b) { return a - b });
+        var graphData = {
+            labels: _.map(bucketKeys, function(bucket) {
+                return bucket + " " + unit.name;
+            }),
+            datasets: [{
+                data: _.map(bucketKeys, function(bucket) {
+                    return buckets[bucket];
+                }),
+                fillColor: '#89ACEA',
+                highlightFill: '#1455EA'
+            }]
+        };
+        var graphContainer = $("<div class='col-md-6'></div>");
+        graphContainer.append("<h2>" + points + " Points</h2>")
+        var graphCanvas = $("<canvas style='width: 50%; height: 200px;'></canvas>");
+        graphContainer.append(graphCanvas);
+        $(".stats-container").append(graphContainer);
+        var ctx = graphCanvas.get(0).getContext("2d");
+        var chart = new Chart(ctx).Bar(graphData, {});
+    });
+}
+
+
+$(function() {
+    Chart.defaults.global.responsive = true;
+
+    var times_by_points_in_seconds = {{ times|tojson|safe }};
+    var units = [
+        {
+            name: 'hours',
+            divisor: 60
+        },
+        {
+            name: 'days',
+            divisor: 60*24
+        }
+    ];
+    generateTimeGraphs(units[1], times_by_points_in_seconds);
+    
+});
+</script>
+{% endblock %}
+
+{% block content %}
+    <p>Using data from {{included_issues}} issues</p>
+
+    <div class='stats-container row'></div>
+{% endblock %}

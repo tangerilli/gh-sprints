@@ -36,28 +36,28 @@ APP_SECRET_KEY = ''
 ISSUE_STATES = [
     {
         'label': 'Pickup',
-        'github_label': ['1', '2'],
+        'github_label': ['2', '3'],
         'open': True,
         'id': 0,
         'color': '#EA6454'
     },
     {
         'label': 'Building',
-        'github_label': ['3'],
+        'github_label': ['4'],
         'open': True,
         'id': 1,
         'color': '#89ACEA'
     },
     {
         'label': 'Code Review',
-        'github_label': ['4'],
+        'github_label': ['5'],
         'open': True,
         'id': 2,
         'color': '#7CEAE8'
     },
     {
         'label': 'Ready to Deploy',
-        'github_label': ['5'],
+        'github_label': ['6'],
         'open': True,
         'id': 3,
         'color': '#92EAB4'
@@ -70,8 +70,11 @@ ISSUE_STATES = [
     }
 ]
 
-# The id's of states that are considered "done"
+# The (ordered) id's of states that are considered "done"
 COMPLETE_STATES = [3, 4]
+
+# The (ordered) id's of the states during which an issue is being built
+BUILD_STATES = [1, 2]
 
 # A regular expression to use for calculating the point count for an issue from its title
 # In the example below, issue titles should look like "(SP3) Some issue" for a 3 point issue
