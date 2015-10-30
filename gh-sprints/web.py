@@ -8,8 +8,9 @@ from database import db_session
 from models import Sprint, IssueSnapshot, SprintCommitment, Snapshot, get_stats_for_snapshots
 from sprints import monitor_sprints
 from authorization import setup_authorization
-
+from statistics import LabelStatisticsCollection
 import settings
+
 
 app = Flask(__name__)
 app.debug = settings.APP_DEBUG
@@ -78,9 +79,12 @@ def sprint(sprint_ids):
             issues.extend([(issue.data, issue.state, issue, issue.sprint_count) for issue in issue_snapshots])
             committed_issues.extend([commitment.issue_id for commitment in sprint.commitments])
 
+        stats_for_all_issues = get_stats_for_snapshots(snapshots)
+        completed_story_points = stats_for_all_issues['completed'][-1]
         stats = {
-            'all': get_stats_for_snapshots(snapshots),
-            'committed': get_stats_for_snapshots(snapshots, committed=True)
+            'all': stats_for_all_issues,
+            'committed': get_stats_for_snapshots(snapshots, committed=True),
+            'label_stats': _get_label_statistics(sprints, completed_story_points),
         }
 
         snapshot_ids = [snapshot.id for snapshot in last_snapshots]
@@ -108,6 +112,21 @@ def sprint(sprint_ids):
                 setattr(sprint, name, value)
             db_session.commit()
         return Response(''), httplib.NO_CONTENT
+
+
+def _get_label_statistics(sprints, completed_story_points):
+    """
+    :type sprints list
+    :rtype {string: LabelStatistics}
+    """
+    label_statistics = LabelStatisticsCollection(completed_story_points)
+
+    for curr_sprint in sprints:
+        issues = curr_sprint.last_snapshot.get_completed_issues()
+        for curr_issue in issues:
+            label_statistics.add_issue(curr_issue)
+
+    return label_statistics
 
 
 @app.route('/sprints/<sprint_id>/commitments', methods=['POST'])
