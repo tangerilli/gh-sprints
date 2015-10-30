@@ -229,6 +229,20 @@ $(function() {
 
 <hr>
 
+<h3>Effort spent on completed issues by label</h3>
+<ul>
+    {% for label in stats.label_stats.sort_by_effort() %}
+    <li>
+        <strong>{{ label.name }}</strong>:
+        {{ label.issues|length }} issues -
+        {{ label.total_story_points }}/{{ stats.all.completed[-1] }} story points
+        ({{ label.story_points_as_percentage }}%)
+    </li>
+    {% endfor %}
+</ul>
+
+<hr>
+
 <div class="row">
     <div class="col-md-12">
         <h4>Snapshots</h4>
