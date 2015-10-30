@@ -127,12 +127,7 @@ class Snapshot(Base):
         return cursor.scalar() or 0
 
     def get_completed_issues(self):
-        completed_issues = []
-        for issue in self.issues:
-            if issue.state in settings.COMPLETE_STATES:
-                completed_issues.append(issue)
-
-        return completed_issues
+        return [issue for issue in self.issues if issue.is_complete()]
 
     def total_points(self, committed=False):
         return Snapshot.get_points_for_states([self.id], [self.sprint_id], committed_only=committed)
