@@ -79,31 +79,31 @@ def save_issue_snapshot(repo, issue, snapshot):
     return is_updated
 
 
-def snapshot_issues(repo, milestone):
+def snapshot_issues(milestone_group):
     """
     Fetches all of the issues for the given sprint and stores them in a database
     """
-    sprint = get_or_create_sprint(milestone)
-    print "Processing {} ({})".format(sprint.name, milestone['number'])
+    sprint = get_or_create_sprint(milestone_group[0][1])
+    print "Processing {}".format(sprint.name)
     if sprint.locked is True:
         print "Skipping '{}', it's locked".format(sprint.name)
         return
     snapshot = Snapshot(sprint)
     db_session.add(snapshot)
-
-    url = 'https://api.github.com/repos/{}/{}/issues?state=all&milestone={}'.format(settings.ORG, repo, milestone['number'])
     have_updates = False
-    while True:
-        issues = _auth_get_request(url)
-        for issue in issues.json():
-            is_updated = save_issue_snapshot(repo, issue, snapshot)
-            have_updates = have_updates or is_updated
+    for repo, milestone in milestone_group:
+        url = 'https://api.github.com/repos/{}/{}/issues?state=all&milestone={}'.format(settings.ORG, repo, milestone['number'])
+        while True:
+            issues = _auth_get_request(url)
+            for issue in issues.json():
+                is_updated = save_issue_snapshot(repo, issue, snapshot)
+                have_updates = have_updates or is_updated
 
-        next_page = _get_next_page(issues)
-        if next_page:
-            url = next_page
-        else:
-            break
+            next_page = _get_next_page(issues)
+            if next_page:
+                url = next_page
+            else:
+                break
 
     if have_updates:
         print "Have updates, committing snapshot"
@@ -135,10 +135,18 @@ def get_recent_milestones(repo):
 
 
 def monitor_sprints():
+    milestones = {}
     for repo in settings.REPOS:
-        milestones = get_recent_milestones(repo)
-        for milestone in milestones:
-            snapshot_issues(repo, milestone)
+        milestones[repo] = get_recent_milestones(repo)
+
+    # Group the milestones
+    milestone_groups = {}
+    for repo, milestone_list in milestones.items():
+        for milestone in milestone_list:
+            milestone_groups.setdefault(milestone['title'], []).append((repo, milestone))
+
+    for milestone_group in milestone_groups.values():
+        snapshot_issues(milestone_group)
 
 
 def _sum_points(issues, state):
